@@ -17,13 +17,23 @@ namespace FurnitureManufacturing_API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetNotes()
+        public async Task<IActionResult> GetNotes([FromQuery] int? userId)
         {
+            IQueryable<Models.Note> query = db.Notes.Include(n => n.User);
+
+            if (userId.HasValue && userId.Value <=0)
+            {
+                return BadRequest(new { error = "Параметр 'userId' должен быть положительным числом." });
+            }
+
+            if (userId.HasValue)
+            {
+                query = query.Where(n => n.UserId == userId.Value);
+            }
+
             try
             {
-                var notes = await db.Notes
-                .Include(n => n.User)
-                .ToListAsync();
+                var notes = await query.ToListAsync();
 
                 var result = notes.Select(n => new NoteResponse
                 {
